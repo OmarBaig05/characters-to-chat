@@ -36,6 +36,8 @@ const App = () => (
             <Route path="/create-agent" element={<CreateNewAgent />} />                     
             <Route path="/rock-paper-dominate" element={<RockPaperDomiate />} />
             <Route path="/quadra-blaze" element={<QuadraBlaze />} />
+            <Route path="/prompt-wars/:model" element={<DarkSanta />} />
+            <Route path="/rock-paper-dominate/:model" element={<DarkSanta />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

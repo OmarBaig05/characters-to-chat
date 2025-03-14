@@ -17,41 +17,18 @@ import structlog
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from flare_ai_social import ChatRouter, GeminiProvider, start_bot_manager
 from flare_ai_social.settings import settings
+from flare_ai_social.api.routes.character_chat import CharacterChatRouter
 
 logger = structlog.get_logger(__name__)
 genai.configure(api_key=settings.gemini_api_key)
 
 
 def create_app() -> FastAPI:
-    """
-    Create and configure the FastAPI application instance.
+    """Create and configure the FastAPI application instance."""
+    app = FastAPI(title="PromptPlay Character API", redirect_slashes=False)
 
-    This function:
-    1. Creates a new FastAPI instance
-    2. Configures CORS middleware with settings from the configuration
-    3. Initializes required service providers:
-       - GeminiProvider for AI capabilities
-       - FlareProvider for blockchain interactions
-       - Vtpm for attestation services
-       - PromptService for managing chat prompts
-    4. Sets up routing for chat endpoints
-
-    Returns:
-        FastAPI: Configured FastAPI application instance
-
-    Configuration:
-        The following settings are used from settings module:
-        - cors_origins: List of allowed CORS origins
-        - gemini_api_key: API key for Gemini AI service
-        - gemini_model: Model identifier for Gemini AI
-        - web3_provider_url: URL for Web3 provider
-        - simulate_attestation: Boolean flag for attestation simulation
-    """
-    app = FastAPI(title="Social AI Agent", redirect_slashes=False)
-
-    # Configure CORS middleware with settings from configuration
+    # Configure CORS middleware
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -60,16 +37,10 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    # Initialize router with service providers
-    chat = ChatRouter(
-        ai=GeminiProvider(
-            api_key=settings.gemini_api_key,
-            model_name=f"tunedModels/{settings.tuned_model_name}",
-        )
-    )
+    # Add the character chat router
+    character_chat = CharacterChatRouter()
+    app.include_router(character_chat.router, prefix="/api/characters", tags=["characters"])
 
-    # Register chat routes with API
-    app.include_router(chat.router, prefix="/api/routes/chat", tags=["chat"])
     return app
 
 
@@ -82,12 +53,8 @@ def start() -> None:
 
     This function initializes and runs the uvicorn server with the configuration:
     - Host: 0.0.0.0 (accessible from all network interfaces)
-    - Port: 8000 (default HTTP port for the application)
+    - Port: 8080 (default HTTP port for the application)
     - App: The FastAPI application instance
-
-    Note:
-        This function is typically called when running the application directly,
-        not when importing as a module.
     """
     import uvicorn
 
@@ -96,4 +63,3 @@ def start() -> None:
 
 if __name__ == "__main__":
     start()
-    start_bot_manager()

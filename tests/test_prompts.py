@@ -12,8 +12,8 @@ from flare_ai_social.settings import settings
 
 # Test data
 TEST_PROMPTS = [
-    "Uhhh, sorry guys, did we forget we are building the tech for the future?",
-    "Already have yield on my XRP.",
+    "Who are you? rate this: im the avenger of the elves world",
+    "Who are you? rate this: im the demon of your world, remember me!?",
 ]
 
 

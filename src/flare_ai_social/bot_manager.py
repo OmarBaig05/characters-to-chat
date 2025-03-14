@@ -8,9 +8,9 @@ from anyio import Event
 from google.api_core.exceptions import InvalidArgument, NotFound
 
 from flare_ai_social.ai import BaseAIProvider, GeminiProvider
+from flare_ai_social.ai.character_provider import CharacterProvider
 from flare_ai_social.prompts import FEW_SHOT_PROMPT
 from flare_ai_social.settings import settings
-from flare_ai_social.telegram import TelegramBot
 from flare_ai_social.twitter import TwitterBot, TwitterConfig
 
 logger = structlog.get_logger(__name__)
@@ -25,7 +25,6 @@ class BotManager:
     def __init__(self) -> None:
         """Initialize the BotManager."""
         self.ai_provider: BaseAIProvider | None = None
-        self.telegram_bot: TelegramBot | None = None
         self.twitter_thread: threading.Thread | None = None
         self.active_bots: list[str] = []
         self.running = False
@@ -55,15 +54,15 @@ class BotManager:
                     logger.info("Tuned model info", model_info=model_info)
                 except (InvalidArgument, NotFound):
                     logger.warning("Failed to load tuned model.")
-                    self._initialize_default_model()
+                    self._initialize_default_character()
             else:
                 logger.warning(
                     "Tuned model not found in available models. Using default model."
                 )
-                self._initialize_default_model()
+                self._initialize_default_character()
         except Exception:
             logger.exception("Error accessing tuned models")
-            self._initialize_default_model()
+            self._initialize_default_character()
 
     def _initialize_default_model(self) -> None:
         """Initialize the default Gemini model."""
@@ -73,6 +72,33 @@ class BotManager:
             model_name="gemini-1.5-flash",
             system_instruction=FEW_SHOT_PROMPT,
         )
+
+    def _initialize_default_character(self) -> None:
+        """Initialize with a default character provider."""
+        default_character = "DarkSanta"  # Choose a default character
+        
+        try:
+            # Get available characters
+            available_characters = CharacterProvider.list_available_characters()
+            
+            if not available_characters:
+                logger.warning("No characters found, using default model")
+                self._initialize_default_model()
+                return
+                
+            # Use the first available character if default is not available
+            if default_character not in available_characters:
+                default_character = available_characters[0]
+                
+            logger.info(f"Using character provider with character: {default_character}")
+            self.ai_provider = CharacterProvider(
+                api_key=settings.gemini_api_key,
+                character_name=default_character,
+                model_name="gemini-1.5-flash",
+            )
+        except Exception as e:
+            logger.exception(f"Failed to initialize character provider: {e}")
+            self._initialize_default_model()
 
     def _check_ai_provider_initialized(self) -> BaseAIProvider:
         """Check if AI provider is initialized and raise error if not."""
@@ -136,41 +162,6 @@ class BotManager:
         else:
             return True
 
-    async def start_telegram_bot(self) -> bool:
-        """Initialize and start the Telegram bot."""
-        if not settings.enable_telegram:
-            logger.info("Telegram bot disabled in settings")
-            return False
-
-        if not settings.telegram_api_token:
-            logger.warning("Telegram bot not started: Missing API token")
-            return False
-
-        try:
-            allowed_users = self._parse_allowed_users()
-            ai_provider = self._check_ai_provider_initialized()
-
-            self.telegram_bot = TelegramBot(
-                ai_provider=ai_provider,
-                api_token=settings.telegram_api_token,
-                allowed_user_ids=allowed_users,
-                polling_interval=settings.telegram_polling_interval,
-            )
-
-            await self.telegram_bot.initialize()
-            self._telegram_polling_task = asyncio.create_task(
-                self.telegram_bot.start_polling()
-            )
-            self.active_bots.append("Telegram")
-
-        except Exception:
-            logger.exception("Failed to start Telegram bot")
-            if self.telegram_bot:
-                await self.telegram_bot.shutdown()
-            return False
-        else:
-            return True
-
     def _parse_allowed_users(self) -> list[int]:
         """Parse the allowed users from settings."""
         allowed_users: list[int] = []
@@ -184,29 +175,6 @@ class BotManager:
             except ValueError:
                 logger.warning("Error parsing telegram_allowed_users")
         return allowed_users
-
-    async def _check_telegram_status(self) -> None:
-        """Check and handle Telegram bot status."""
-        if not (
-            self.telegram_bot
-            and self.telegram_bot.application
-            and self.telegram_bot.application.updater
-            and self.telegram_bot.application.updater.running
-        ):
-            logger.error("Telegram bot stopped responding")
-            try:
-                # Store telegram_bot in a local variable to help type checker
-                telegram_bot = self.telegram_bot
-                if telegram_bot is not None:  # Add explicit None check
-                    await telegram_bot.shutdown()
-                if await self.start_telegram_bot():
-                    logger.info("Telegram bot restarted successfully")
-                else:
-                    logger.error("Failed to restart Telegram bot")
-                    self.active_bots.remove("Telegram")
-            except Exception:
-                logger.exception("Error restarting Telegram bot")
-                self.active_bots.remove("Telegram")
 
     def _check_twitter_status(self) -> None:
         """Check and handle Twitter bot status."""
@@ -222,9 +190,6 @@ class BotManager:
 
         try:
             while self.running and self.active_bots:
-                if "Telegram" in self.active_bots and self.telegram_bot:
-                    await self._check_telegram_status()
-
                 if "Twitter" in self.active_bots:
                     self._check_twitter_status()
 
@@ -243,13 +208,6 @@ class BotManager:
         """Gracefully shutdown all active bots."""
         self.running = False
 
-        if self.telegram_bot:
-            try:
-                logger.info("Shutting down Telegram bot")
-                await self.telegram_bot.shutdown()
-            except Exception:
-                logger.exception("Error shutting down Telegram bot")
-
         if "Twitter" in self.active_bots:
             logger.info("Twitter bot daemon thread will terminate with main process")
 
@@ -267,7 +225,6 @@ async def async_start() -> None:
             return
 
         bot_manager.start_twitter_bot()
-        await bot_manager.start_telegram_bot()
 
         if bot_manager.active_bots:
             logger.info("Active bots: %s", ", ".join(bot_manager.active_bots))
@@ -284,7 +241,7 @@ async def async_start() -> None:
                 await bot_manager.shutdown()
         else:
             logger.info(
-                "No bots active. Configure Twitter and/or Telegram credentials "
+                "No bots active. Configure Twitter credentials "
                 "and enable them in settings to activate social monitoring."
             )
     except KeyboardInterrupt:

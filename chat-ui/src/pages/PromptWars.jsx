@@ -5,40 +5,39 @@ import AgentCard from '../components/AgentCard'; // Assuming you have a similar 
 import { motion } from 'framer-motion';
 import { Footer } from '../components/Footer';
 
+import { useNavigate } from 'react-router-dom';
+
+
 const Agents = () => {
+  
+
+  const navigate = useNavigate();
   const agents = [
     {
       title: 'Dark Santa',
       description:
         'A mysterious figure who loves his worker elves and protects them at all costs. He has a metal arm with advanced modifications.',
       image: '/DarkSanta.jpg', 
-      navLink: '/dark-santa',
+      navLink: 'Dark_Santa',
     },
     {
-      title: 'Blue Vigilante',
+      title: 'Cosmos Helper',
       description:
         'A vigilante who uses his intelligence and gadgets to fight crime. Known for his blue suit and unmatched detective skills.',
       image: '/BlueBatman.jpg',
-      navLink: '/blue-batman',
+      navLink: 'CosmosHelper',
     },
     {
-      title: 'Cyber Ninja',
+      title: 'Dobby',
       description:
         'A stealthy warrior with cybernetic enhancements. Masters in martial arts and hacking, always ready for a covert mission.',
       image: '/CyberNinja.webp', 
-      navLink: '/cyber-ninja',
-    },
-    {
-      title: 'Quantum Wizard',
-      description:
-        'A master of quantum mechanics and magic. Uses his knowledge to manipulate reality and cast powerful spells.',
-      image: '/QuantumWizard.webp',
-      navLink: '/quantum-wizard',
+      navLink: 'Dobby',
     },
   ];
 
   const handleCardClick = (navLink) => {
-    window.location.href = navLink;
+    navigate(`/promptWarGame/${navLink}`);
   };
 
   return (

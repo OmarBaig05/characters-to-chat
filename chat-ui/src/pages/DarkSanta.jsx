@@ -18,9 +18,11 @@ import SantaProfile from '../components/chat/SantaProfile';
 import { useToast } from "@/hooks/use-toast";
 import {requestTransaction} from "@/lib/transactions";
 
+import { useParams } from "react-router-dom";
+
 
 const Index = () => {
-
+  const { model } = useParams();
 
   const { toast } = useToast();
   const [userBalance, setUserBalance] = useState(100);
@@ -91,7 +93,7 @@ const Index = () => {
               'Content-Type': 'application/json',
           },
           body: JSON.stringify({ 
-            character: "Dark_Santa",
+            character: model,
             message: promptText }),
       });
 
@@ -164,6 +166,10 @@ const Index = () => {
     });
   };
 
+  if (!model){
+    return;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-gray-800 text-white overflow-x-hidden">
       <Header userBalance={userBalance} />
@@ -174,9 +180,9 @@ const Index = () => {
           <div className="inline-block bg-santa-600/20 text-santa-100 px-3 py-1 rounded-full text-sm font-medium mb-4 animate-pulse">
             Face the judgment
           </div>
-          <h1 className="text-5xl md:text-6xl font-bold mb-4 font-serif">Dark Santa's Judgment</h1>
+          <h1 className="text-5xl md:text-6xl font-bold mb-4 font-serif">{model}'s Judgment</h1>
           <p className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto">
-            Submit your best prompt to the legendary Dark Santa—an AI agent with its own will!
+            Submit your best prompt to the legendary {model}—an AI agent with its own will!
             Will he find your creation worthy?
           </p>
         </section>
@@ -241,7 +247,7 @@ const Index = () => {
         <section className="mt-16 text-center py-12 animate-fade-in" style={{ animationDelay: '1s' }}>
           <h2 className="text-3xl font-bold mb-4 font-serif">Want to Join the Action?</h2>
           <p className="text-xl text-gray-300 max-w-2xl mx-auto mb-8">
-            Dark Santa is always looking for more challengers. Submit now and see if your ideas make the cut!
+            {model} is always looking for more challengers. Submit now and see if your ideas make the cut!
           </p>
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
@@ -254,7 +260,7 @@ const Index = () => {
 
       <footer className="bg-black/50 border-t border-gray-800 mt-16 py-6">
         <div className="container mx-auto px-4 text-center text-gray-400">
-          <p>&copy; {new Date().getFullYear()} Dark Santa's Judgment. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} {model}'s Judgment. All rights reserved.</p>
         </div>
       </footer>
     </div>

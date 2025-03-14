@@ -5,19 +5,24 @@ import AgentCard from '../components/AgentCard'; // Assuming you have a similar 
 import { motion } from 'framer-motion';
 import { Footer } from '../components/Footer';
 
+import { useNavigate } from 'react-router-dom';
+
+
 const RockPaperDominate = () => {
+    const navigate = useNavigate();
+
     const agents = [
         {
             title: 'QuadraBlaze',
             description:
                 'A blazing powerhouse with four arms, ready to set the battlefield on fire with unmatched speed and strategy.',
             image: '/QuadraBlaze.jpg',
-            navLink: '/quadra-blaze',
+            navLink: 'QuadraBlaze',
         },
     ];
 
     const handleCardClick = (navLink) => {
-        window.location.href = navLink;
+        navigate(`/rock-paper-dominate/${navLink}`);
     };
 
     return (
@@ -32,7 +37,7 @@ const RockPaperDominate = () => {
                     Available Agents
                 </motion.h1>
 
-                <motion.div 
+                <motion.div
                     className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}

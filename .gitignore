@@ -14,3 +14,8 @@ wheels/
 .DS_Store
 *.png
 myenv
+
+backend/.env
+backend/.venv
+frontend/node_modules
+frontend/.gitignore

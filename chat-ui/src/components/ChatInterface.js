@@ -6,7 +6,7 @@ import {
 import ReactMarkdown from 'react-markdown';
 import './ChatInterface.css';
 
-const BACKEND_ROUTE = 'api/routes/chat/'
+const BACKEND_ROUTE = 'http://localhost:8080/api/routes/chat/'
 
 const ChatInterface = () => {
     const [messages, setMessages] = useState([

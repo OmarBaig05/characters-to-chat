@@ -7,7 +7,7 @@ import {
 import { getAllAgents, sendMessage } from '../lib/api';
 
 // const BACKEND_ROUTE = 'api/routes/chat/'
-const BACKEND_ROUTE = "http://localhost:8000/api/characters/chat";
+const BACKEND_ROUTE = "/api/characters/chat";
 
 // Components
 import Header from '../components/chat/Header';
